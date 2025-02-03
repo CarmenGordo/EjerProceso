@@ -1,9 +1,6 @@
 package org.example;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Properties;
 import java.util.Scanner;
 import javax.mail.*;
@@ -12,16 +9,13 @@ import javax.mail.internet.MimeMessage;
 
 public class Main {
     public static void main(String[] args) {
-
         Scanner scanner = new Scanner(System.in);
-
 
         System.out.print("Introduce el asunto del correo: ");
         String asunto = scanner.nextLine();
 
         System.out.print("Introduce el contenido del correo: ");
         String contenido = scanner.nextLine();
-
 
         System.out.println("\n¿Qué sistema operativo tienes?");
         System.out.println("1. Windows");
@@ -31,19 +25,17 @@ public class Main {
         int choice = scanner.nextInt();
         scanner.nextLine();
 
-
         String fileName = System.getProperty("user.home") + "/Documents/NotaEjercicioProceso.txt";
         File noteFile = new File(fileName);
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(noteFile))) {
-            writer.write("Asunto: \n" + asunto + "\n");
-            writer.write("Contenido: \n" + contenido);
+            writer.write("Asunto:\n" + asunto + "\n");
+            writer.write("Contenido:\n" + contenido);
         } catch (IOException e) {
             System.out.println("Error al escribir el archivo: " + e.getMessage());
             return;
         }
 
-        // Abrir la nota según el sistema operativo
         ProcessBuilder processBuilder = null;
         switch (choice) {
             case 1:
@@ -67,11 +59,10 @@ public class Main {
             System.out.println("Error al abrir la nota: " + e.getMessage());
         }
 
-        // Enviar el contenido por correo
         System.out.print("\n¿Deseas enviar esta nota por correo? (sí/no): ");
-        String sendEmail = scanner.nextLine();
+        String scannerEmail = scanner.nextLine();
 
-        if (sendEmail.equalsIgnoreCase("si") || sendEmail.equalsIgnoreCase("Si") || sendEmail.equalsIgnoreCase("sí")) {
+        if (scannerEmail.equalsIgnoreCase("si") || scannerEmail.equalsIgnoreCase("sí")) {
             System.out.print("Introduce el correo del destinatario: ");
             String recipient = scanner.nextLine();
 
@@ -81,13 +72,46 @@ public class Main {
             System.out.print("Introduce tu contraseña del correo: ");
             String password = scanner.nextLine();
 
-            sendEmail(asunto, contenido, recipient, sender, password);
+            // Actualización del archivo
+            String[] updatedContent = readFileContent(noteFile);
+            if (updatedContent != null) {
+                String asuntoActualizado = updatedContent[0];
+                String contenidoActualizado = updatedContent[1];
+                enviarEmail(asuntoActualizado, contenidoActualizado, recipient, sender, password);
+            } else {
+                System.out.println("No se pudo leer el archivo actualizado para enviarlo.");
+            }
         }
 
         scanner.close();
     }
 
-    private static void sendEmail(String subject, String body, String recipient, String sender, String password) {
+    //leer el contenido actualizado del archivo
+    private static String[] readFileContent(File file) {
+        String asunto = "";
+        StringBuilder contenido = new StringBuilder();
+        boolean isContenido = false;
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("Asunto:")) {
+                    asunto = reader.readLine().trim(); // Lee la línea después de "Asunto:"
+                } else if (line.startsWith("Contenido:")) {
+                    isContenido = true;
+                } else if (isContenido) {
+                    contenido.append(line).append("\n");
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Error al leer el archivo: " + e.getMessage());
+            return null;
+        }
+        return new String[]{asunto, contenido.toString().trim()};
+    }
+
+    //enviar el correo
+    private static void enviarEmail(String subject, String body, String recipient, String sender, String password) {
         // Configurar propiedades para el servidor de correo
         Properties properties = new Properties();
         properties.put("mail.smtp.auth", "true");
@@ -95,7 +119,7 @@ public class Main {
         properties.put("mail.smtp.host", "smtp.gmail.com");
         properties.put("mail.smtp.port", "587");
 
-        // Crear sesión con autenticación
+        //comprobar autenticación del correo
         Session session = Session.getInstance(properties, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -104,14 +128,14 @@ public class Main {
         });
 
         try {
-            // Crear el mensaje
+            //crear el mensaje
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(sender));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient));
             message.setSubject(subject);
             message.setText(body);
 
-            // Enviar el mensaje
+            //enviar el mensaje
             Transport.send(message);
             System.out.println("Correo enviado correctamente a " + recipient);
 
