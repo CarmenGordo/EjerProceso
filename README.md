@@ -26,9 +26,4 @@ Jesús Jímenez
 
 **Client:** Java
 
-## Webgrafía
-
-- [Tipos de datos en Postgress](https://www.todopostgresql.com/postgresql-data-types-los-tipos-de-datos-mas-utilizados/)
-- [BD en Java mediante JDBC](https://adictosaltrabajo.com/2011/02/25/tutorial-basico-jdbc/)
-- [Creación del Read.me](https://readme.so/es/editor)
 
