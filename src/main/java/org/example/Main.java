@@ -72,35 +72,42 @@ public class Main {
             System.out.print("Introduce tu contraseña del correo: ");
             String password = scanner.nextLine();
 
-            // Actualización del archivo
-            String[] updatedContent = readFileContent(noteFile);
-            if (updatedContent != null) {
-                String asuntoActualizado = updatedContent[0];
-                String contenidoActualizado = updatedContent[1];
+            //actulizar del archivo
+            String[] actualizarContent = leerFileContent(noteFile);
+            if (actualizarContent != null) {
+                String asuntoActualizado = actualizarContent[0];
+                String contenidoActualizado = actualizarContent[1];
                 enviarEmail(asuntoActualizado, contenidoActualizado, recipient, sender, password);
             } else {
                 System.out.println("No se pudo leer el archivo actualizado para enviarlo.");
             }
+        } else{
+            System.out.println("Proceso acabado sin enviar el correo.");
         }
 
         scanner.close();
     }
 
     //leer el contenido actualizado del archivo
-    private static String[] readFileContent(File file) {
+    private static String[] leerFileContent(File file) {
         String asunto = "";
         StringBuilder contenido = new StringBuilder();
-        boolean isContenido = false;
+        boolean hayContenido = false;
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("Asunto:")) {
-                    asunto = reader.readLine().trim(); // Lee la línea después de "Asunto:"
-                } else if (line.startsWith("Contenido:")) {
-                    isContenido = true;
-                } else if (isContenido) {
-                    contenido.append(line).append("\n");
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+
+                //leer la línea después de "Asunto:"
+                if (linea.startsWith("Asunto:")) {
+                    asunto = reader.readLine().trim();
+
+                //leer la línea después de "Contenido:"
+                } else if (linea.startsWith("Contenido:")) {
+                    hayContenido = true;
+
+                } else if (hayContenido) {
+                    contenido.append(linea).append("\n");
                 }
             }
         } catch (IOException e) {
@@ -112,7 +119,7 @@ public class Main {
 
     //enviar el correo
     private static void enviarEmail(String subject, String body, String recipient, String sender, String password) {
-        // Configurar propiedades para el servidor de correo
+        //propiedades para el servidor del correo
         Properties properties = new Properties();
         properties.put("mail.smtp.auth", "true");
         properties.put("mail.smtp.starttls.enable", "true");
@@ -120,7 +127,7 @@ public class Main {
         properties.put("mail.smtp.port", "587");
 
         //comprobar autenticación del correo
-        Session session = Session.getInstance(properties, new Authenticator() {
+        Session sesion = Session.getInstance(properties, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(sender, password);
@@ -129,7 +136,7 @@ public class Main {
 
         try {
             //crear el mensaje
-            Message message = new MimeMessage(session);
+            Message message = new MimeMessage(sesion);
             message.setFrom(new InternetAddress(sender));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient));
             message.setSubject(subject);
